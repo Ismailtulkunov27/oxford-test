@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>English Placement Test</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:var(--tg-theme-bg-color,#fff);--tx:var(--tg-theme-text-color,#1b1b1b);--hint:var(--tg-theme-hint-color,#707579);--btn:var(--tg-theme-button-color,#2a6df4);--btx:var(--tg-theme-button-text-color,#fff);--sec:var(--tg-theme-secondary-bg-color,#f1f3f5)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:90px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--sec);padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+#timer{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+#timer.low{color:#d93025}
+#prog{color:var(--hint);font-size:14px}
+main{max-width:640px;margin:0 auto;padding:0 16px}
+h2{font-size:20px;margin:32px 0 6px;padding-bottom:8px;border-bottom:3px solid var(--btn)}
+.text{background:var(--sec);border-left:4px solid var(--btn);border-radius:12px;padding:14px 16px;margin:20px 0 14px;font-size:15px;line-height:1.55}
+.q{margin:14px 0;padding:14px;border:2px solid color-mix(in srgb,var(--hint) 40%,transparent);border-radius:16px;background:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.08);transition:border-color .2s}
+.q.ok{border-color:var(--btn)}
+.q p{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;font-weight:600}
+.n{flex:none;min-width:28px;height:28px;border-radius:14px;background:var(--btn);color:var(--btx);font-size:14px;display:flex;align-items:center;justify-content:center;padding:0 8px}
+.o{display:block;width:100%;text-align:left;font:inherit;color:var(--tx);background:var(--sec);border:2px solid transparent;border-radius:12px;padding:11px 14px;margin:8px 0}
+.o.on{border-color:var(--btn);background:color-mix(in srgb,var(--btn) 15%,var(--bg));font-weight:600}
+.o:focus-visible{outline:2px solid var(--btn)}
+#done{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--sec)}
+#done button{display:block;width:100%;max-width:640px;margin:0 auto;font:inherit;font-weight:700;background:var(--btn);color:var(--btx);border:0;border-radius:10px;padding:13px}
+#res{text-align:center;padding:60px 16px}
+#res b{font-size:48px;display:block}
+</style>
+</head>
+<body>
+<header><span id="timer">40:00</span><span id="prog"></span></header>
+<main id="m"></main>
+<div id="done"><button id="fin"></button></div>
+<script>
+const tg=window.Telegram&&Telegram.WebApp;if(tg){tg.ready();tg.expand();}
+const lang=new URLSearchParams(location.search).get("lang")==="uz"?"uz":"ru";
+const UI={ru:{p1:"Часть 1. Грамматика и лексика",p2:"Часть 2. Чтение",fin:"Завершить тест",cf:"Завершить тест? Без ответа осталось: ",ans:"Отвечено",lvl:"Ваш примерный уровень",t:"Баллы"},
+uz:{p1:"1-qism. Grammatika va lug'at",p2:"2-qism. O'qish",fin:"Testni yakunlash",cf:"Testni yakunlaysizmi? Javobsiz qolgani: ",ans:"Javob berildi",lvl:"Taxminiy darajangiz",t:"Ball"}}[lang];
+const MIN=40;
+// Первый вариант в каждом вопросе — правильный. Порядок вариантов перемешивается при показе.
+const Q=[
+["She ___ a student.",["is","am","are","be"]],
+["I ___ breakfast at 7 every day.",["have","has","having","am have"]],
+["There ___ two books on the table.",["are","is","am","be"]],
+["___ you like coffee?",["Do","Does","Are","Is"]],
+["This is my brother. ___ name is Tom.",["His","Her","He","Him"]],
+["We live ___ Tashkent.",["in","on","at","to"]],
+["Yesterday I ___ to the cinema.",["went","go","goed","have gone"]],
+["He is ___ than his sister.",["taller","tall","tallest","more tall"]],
+["Look! It ___ now.",["is raining","rains","rain","rained"]],
+["I haven't got ___ money.",["any","some","a","many"]],
+["I'm going to visit my grandmother ___ Saturday.",["on","in","at","by"]],
+["She ___ her homework yet.",["hasn't finished","doesn't finish","didn't finished","isn't finishing"]],
+["If it rains tomorrow, we ___ at home.",["will stay","stay","would stay","stayed"]],
+["I've lived here ___ 2019.",["since","for","from","during"]],
+["The film was ___ boring that we left early.",["so","such","too","very"]],
+["You ___ use your phone during the exam. It's against the rules.",["mustn't","don't have to","needn't","may"]],
+["This is the man ___ car was stolen.",["whose","who","which","whom"]],
+["English ___ in many countries.",["is spoken","speaks","is speaking","spoke"]],
+["He asked me where ___.",["I lived","do I live","did I live","I do live"]],
+["If I ___ more time, I would learn Chinese.",["had","have","will have","would have"]],
+["By next year, she ___ her degree.",["will have finished","will finish","finishes","is finishing"]],
+["I wish I ___ taller.",["were","am","will be","would be"]],
+["She suggested ___ a taxi.",["taking","to take","take","to taking"]],
+["The report ___ by the time the manager arrived.",["had already been finished","already finished","was already finishing","has already finished"]],
+["\"You look tired.\" \"Yes, I ___ since 5 a.m.\"",["have been working","worked","am working","work"]],
+["Hardly ___ the room when the phone rang.",["had he entered","he entered","did he enter","he had entered"]],
+["Had I known about the delay, I ___ earlier.",["would have left","would leave","had left","left"]],
+["She is said ___ the best lawyer in the city.",["to be","be","being","that she is"]],
+["Not only ___ late, but he also forgot the documents.",["was he","he was","he is","did he"]],
+["I'd rather you ___ anything to him about it.",["didn't say","don't say","won't say","not to say"]],
+["Who does Anna live with?",["her brother","her parents","nobody","Dilya"]],
+["What does Anna do on Saturday afternoon?",["meets a friend","goes to the market","cleans the flat","sleeps"]],
+["What does Anna do on Sunday?",["stays at home","goes to a café","buys fruit","meets Dilya"]],
+["What was the advantage of working from home at first?",["no traffic and more family time","higher salaries","shorter working hours","new colleagues"]],
+["Why did some employees have problems later?",["loneliness and difficulty switching off from work","bad internet","too much traffic","low pay"]],
+["What do some companies offer now?",["a mix of office and home","only office work","only home work","a four-day week"]],
+["What is the main point of the text?",["The lark/owl division is too simple.","Larks are healthier than owls.","Genetics is irrelevant.","Everyone should wake up early."]],
+["Which factor is NOT mentioned as influencing the body clock?",["diet","genetics","daylight","work schedules"]],
+["According to some scientists, teenagers who struggle with early lessons...",["are biologically inclined to feel alert later","are lazy","are ill","are badly taught"]],
+["What is the critics' objection?",["Changing school times would cause practical problems for families.","The research is outdated.","Teenagers need less sleep.","Schools don't care about students."]]
+];
+const TEXTS={30:"Anna lives in a small flat in Samarkand with her brother. On Saturday she usually gets up late and has breakfast at 10 o'clock. Then she goes to the market to buy fruit and vegetables. In the afternoon she meets her friend Dilya, and they drink tea in a café. On Sunday Anna stays at home and cleans the flat.",
+33:"Many people started working from home during the last few years. At first, it seemed like the perfect solution: no traffic, no early alarms and more time with family. However, after some months, a lot of employees began to feel lonely. Some said they could not stop thinking about work because their desk was only a few steps from their bed. As a result, several companies now offer a mixed schedule, with two or three days in the office and the rest at home.",
+36:"The idea that people can be neatly divided into \"morning larks\" and \"night owls\" has been popular for decades. Recent research, though, suggests the picture is more complicated. While genetics certainly influence when we feel most alert, our habits, work schedules and even exposure to daylight can shift our internal clock considerably. Some scientists argue that forcing teenagers to start school early is harmful, not because they are lazy, but because their biological rhythm naturally moves later during adolescence. Critics, however, point out that schools cannot easily change timetables without affecting parents' working hours and transport systems."};
+const LEVELS=[[8,"A1"],[15,"A2"],[24,"B1"],[32,"B2"],[40,"C1"]];
+const level=s=>LEVELS.find(l=>s<=l[0])[1];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+const ans=new Array(Q.length).fill(null);
+const m=document.getElementById("m");
+Q.forEach((q,i)=>{
+  if(i===0)m.insertAdjacentHTML("beforeend","<h2>"+UI.p1+"</h2>");
+  if(i===30)m.insertAdjacentHTML("beforeend","<h2>"+UI.p2+"</h2>");
+  if(TEXTS[i])m.insertAdjacentHTML("beforeend",'<div class="text">'+TEXTS[i]+"</div>");
+  const box=document.createElement("div");box.className="q";
+  const p=document.createElement("p");
+  const nb=document.createElement("span");nb.className="n";nb.textContent=i+1;
+  const qt=document.createElement("span");qt.textContent=q[0];
+  p.append(nb,qt);box.appendChild(p);
+  shuffle(q[1]).forEach(t=>{
+    const b=document.createElement("button");b.type="button";b.className="o";b.textContent=t;
+    b.onclick=()=>{ans[i]=t;box.querySelectorAll(".o").forEach(x=>x.classList.remove("on"));b.classList.add("on");box.classList.add("ok");prog();};
+    box.appendChild(b);
+  });
+  m.appendChild(box);
+});
+function prog(){document.getElementById("prog").textContent=UI.ans+": "+ans.filter(x=>x!==null).length+"/"+Q.length;}
+prog();
+document.getElementById("fin").textContent=UI.fin;
+
+let left=MIN*60,over=false;
+const tEl=document.getElementById("timer");
+function tick(){
+  const mm=String(Math.floor(left/60)).padStart(2,"0"),ss=String(left%60).padStart(2,"0");
+  tEl.textContent=mm+":"+ss;tEl.classList.toggle("low",left<=300);
+  if(left<=0){finish();return;}
+  left--;
+}
+const iv=setInterval(tick,1000);tick();
+
+function finish(){
+  if(over)return;over=true;clearInterval(iv);
+  const wrong=[];let s=0;
+  Q.forEach((q,i)=>{if(ans[i]===q[1][0])s++;else wrong.push(i+1);});
+  const lv=level(s);
+  const used=Math.round((MIN*60-Math.max(left,0))/60);
+  const payload=JSON.stringify({s:s,l:lv,t:used,w:wrong});
+  if(tg&&tg.initData){tg.sendData(payload);}
+  else{document.body.innerHTML='<div id="res">'+UI.lvl+'<b>'+lv+'</b>'+UI.t+": "+s+"/"+Q.length+"</div>";}
+}
+document.getElementById("fin").onclick=()=>{
+  const un=ans.filter(x=>x===null).length;
+  const msg=UI.cf+un;
+  if(tg&&tg.showConfirm)tg.showConfirm(msg,ok=>{if(ok)finish();});
+  else if(confirm(msg))finish();
+};
+</script>
+</body>
+</html>
